@@ -45,7 +45,18 @@ import org.wildfly.discovery.spi.DiscoveryResult;
 public final class Discovery implements Contextual<Discovery> {
 
     private static final Logger log = Logger.getLogger("org.wildfly.discovery");
-    private static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
+    //FIXME
+    private static final ServicesQueue.DiscoveryResult END_MARK = new ServicesQueue.DiscoveryResult() {
+        @Override
+        public ServiceURL getServiceURL() {
+            return null;
+        }
+
+        @Override
+        public void processMissingTarget(Exception cause) {
+
+        }
+    };
 
     private static final ContextManager<Discovery> CONTEXT_MANAGER;
 
@@ -113,7 +124,7 @@ public final class Discovery implements Contextual<Discovery> {
         Assert.assertNotNull(timeUnit);
 
         Assert.checkNotNullParam("serviceType", serviceType);
-        final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<ServicesQueue.DiscoveryResult> queue = new LinkedBlockingQueue<>();
         final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
         final DiscoveryResult result = new BlockingQueueDiscoveryResult(queue, problems);
 
@@ -175,10 +186,10 @@ public final class Discovery implements Contextual<Discovery> {
 
     static final class BlockingQueueDiscoveryResult implements DiscoveryResult {
         private final AtomicBoolean done = new AtomicBoolean(false);
-        private final BlockingQueue<ServiceURL> queue;
+        private final BlockingQueue<ServicesQueue.DiscoveryResult> queue;
         private final CopyOnWriteArrayList<Throwable> problems;
 
-        BlockingQueueDiscoveryResult(final BlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems) {
+        BlockingQueueDiscoveryResult(final BlockingQueue<ServicesQueue.DiscoveryResult> queue, final CopyOnWriteArrayList<Throwable> problems) {
             this.queue = queue;
             this.problems = problems;
         }
@@ -197,7 +208,7 @@ public final class Discovery implements Contextual<Discovery> {
             log.tracef(description, "Reported problem on %s", this);
         }
 
-        public void addMatch(final ServiceURL serviceURL) {
+        public void addMatch(final ServicesQueue.DiscoveryResult serviceURL) {
             if (serviceURL != null && ! done.get()) {
                 log.tracef("Adding service URL match \"%s\" to %s", serviceURL, this);
                 // if the queue is full, drop
@@ -209,19 +220,19 @@ public final class Discovery implements Contextual<Discovery> {
     }
 
     static final class BlockingQueueServicesQueue implements ServicesQueue {
-        private final LinkedBlockingQueue<ServiceURL> queue;
+        private final LinkedBlockingQueue<DiscoveryResult> queue;
         private final CopyOnWriteArrayList<Throwable> problems;
         private final DiscoveryRequest request;
         private final long timeout;
         private final TimeUnit timeUnit;
-        private ServiceURL next;
+        private DiscoveryResult next;
         private boolean done;
 
-        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request) {
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<DiscoveryResult> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request) {
             this(queue, problems, request, Long.MAX_VALUE, TimeUnit.DAYS);
         }
 
-        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request, final long time, final TimeUnit timeUnit) {
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<DiscoveryResult> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request, final long time, final TimeUnit timeUnit) {
             this.queue = queue;
             this.problems = problems;
             this.request = request;
@@ -263,7 +274,7 @@ public final class Discovery implements Contextual<Discovery> {
             return next != null || done;
         }
 
-        public ServiceURL pollService() {
+        public DiscoveryResult pollService() {
             try {
                 return next;
             } finally {
@@ -271,13 +282,13 @@ public final class Discovery implements Contextual<Discovery> {
             }
         }
 
-        public ServiceURL takeService() throws InterruptedException {
+        public DiscoveryResult takeService() throws InterruptedException {
             await();
             return pollService();
         }
 
         @Override
-        public ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
+        public DiscoveryResult takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
             if (timeout <= 0) timeout = Long.MAX_VALUE;
             await(timeout, timeUnit);
             return pollService();

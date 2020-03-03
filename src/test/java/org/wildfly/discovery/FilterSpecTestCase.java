@@ -155,12 +155,12 @@ public final class FilterSpecTestCase {
         // call discovery for single attribute
         System.out.println("Calling discover for filterspec " + cluster);
         try (final ServicesQueue servicesQueue = discover(cluster)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
+            ServiceURL serviceURL = servicesQueue.takeService().getServiceURL();
             do {
                 System.out.println("ServiceURL found = " + serviceURL);
                 results.add(serviceURL);
 
-                serviceURL = servicesQueue.takeService();
+                serviceURL = servicesQueue.takeService().getServiceURL();
             } while (serviceURL != null) ;
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted ...");
@@ -184,12 +184,12 @@ public final class FilterSpecTestCase {
         // call discovery for single attribute
         System.out.println("Calling discover for filterspec " + all);
         try (final ServicesQueue servicesQueue = discover(all)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
+            ServiceURL serviceURL = servicesQueue.takeService().getServiceURL();
             do {
                 System.out.println("ServiceURL found = " + serviceURL);
                 results.add(serviceURL);
 
-                serviceURL = servicesQueue.takeService();
+                serviceURL = servicesQueue.takeService().getServiceURL();
             } while (serviceURL != null) ;
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted ...");

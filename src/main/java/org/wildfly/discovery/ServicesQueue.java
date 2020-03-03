@@ -63,7 +63,7 @@ public interface ServicesQueue extends AutoCloseable {
      * @return the next URI, or {@code null} if the queue is not ready or is finished
      */
     default URI poll() {
-        final ServiceURL serviceURL = pollService();
+        final ServiceURL serviceURL = pollService().getServiceURL();
         return serviceURL == null ? null : serviceURL.getLocationURI();
     }
 
@@ -76,7 +76,7 @@ public interface ServicesQueue extends AutoCloseable {
      * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
      */
     default URI take() throws InterruptedException {
-        final ServiceURL serviceURL = takeService();
+        final ServiceURL serviceURL = takeService().getServiceURL();
         return serviceURL == null ? null : serviceURL.getLocationURI();
     }
 
@@ -86,7 +86,7 @@ public interface ServicesQueue extends AutoCloseable {
      *
      * @return the next service URL, or {@code null} if the queue is not ready or is finished
      */
-    ServiceURL pollService();
+    DiscoveryResult pollService();
 
     /**
      * Get the next entry from the queue, blocking until one is available or the thread is interrupted.  Returns
@@ -95,7 +95,7 @@ public interface ServicesQueue extends AutoCloseable {
      * @return the next service URL, or {@code null} if the queue is finished
      * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
      */
-    ServiceURL takeService() throws InterruptedException;
+    DiscoveryResult takeService() throws InterruptedException;
 
     /**
      * Get the next entry from the queue, blocking until one is available or timeout expires.  Returns
@@ -104,7 +104,7 @@ public interface ServicesQueue extends AutoCloseable {
      * @return the next service URL, or {@code null} if the queue is finished
      * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
      */
-    ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException;
+    DiscoveryResult takeService(long timeout, TimeUnit timeUnit) throws InterruptedException;
 
     /**
      * Query whether this queue is finished (all services have been read).
@@ -165,17 +165,17 @@ public interface ServicesQueue extends AutoCloseable {
                 return poll();
             }
 
-            public ServiceURL pollService() {
+            public DiscoveryResult pollService() {
                 return ServicesQueue.this.pollService();
             }
 
-            public ServiceURL takeService() throws InterruptedException {
+            public DiscoveryResult takeService() throws InterruptedException {
                 await();
                 return pollService();
             }
 
             @Override
-            public ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            public DiscoveryResult takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
                 await(timeout, timeUnit);
                 return pollService();
             }
@@ -193,5 +193,10 @@ public interface ServicesQueue extends AutoCloseable {
                 return ServicesQueue.this.getProblems();
             }
         };
+    }
+
+    interface DiscoveryResult {
+        ServiceURL getServiceURL();
+        void processMissingTarget(Exception cause);
     }
 }

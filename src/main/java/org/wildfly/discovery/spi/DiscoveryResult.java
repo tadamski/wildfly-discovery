@@ -21,6 +21,7 @@ package org.wildfly.discovery.spi;
 import java.net.URI;
 
 import org.wildfly.discovery.ServiceURL;
+import org.wildfly.discovery.ServicesQueue;
 
 /**
  * The discovery result.  Instances of this class must be safe for use from multiple threads concurrently.
@@ -58,5 +59,19 @@ public interface DiscoveryResult {
      *
      * @param serviceURL the discovered service URL
      */
-    void addMatch(ServiceURL serviceURL);
+    default void addMatch(ServiceURL serviceURL){
+        addMatch(new ServicesQueue.DiscoveryResult() {
+            @Override
+            public ServiceURL getServiceURL() {
+                return serviceURL;
+            }
+
+            @Override
+            public void processMissingTarget(Exception cause) {
+
+            }
+        });
+    }
+
+    void addMatch(ServicesQueue.DiscoveryResult discoveryResult);
 }

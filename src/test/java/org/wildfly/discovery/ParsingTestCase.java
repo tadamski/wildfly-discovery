@@ -41,10 +41,10 @@ public class ParsingTestCase {
         // call discovery to retrieve the abstract node we defined
         List<ServiceURL> nodeResults = new ArrayList<ServiceURL>();
         try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, cluster)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
+            ServiceURL serviceURL = servicesQueue.takeService().getServiceURL();
             while (serviceURL != null) {
                 nodeResults.add(serviceURL);
-                serviceURL = servicesQueue.takeService();
+                serviceURL = servicesQueue.takeService().getServiceURL();
             }
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted!");
@@ -56,10 +56,10 @@ public class ParsingTestCase {
         // call discovery to retrieve the concrete URI we defined
         List<ServiceURL> URIResults = new ArrayList<ServiceURL>();
         try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, node)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
+            ServiceURL serviceURL = servicesQueue.takeService().getServiceURL();
             while (serviceURL != null)  {
                 URIResults.add(serviceURL);
-                serviceURL = servicesQueue.takeService();
+                serviceURL = servicesQueue.takeService().getServiceURL();
             }
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted!");
